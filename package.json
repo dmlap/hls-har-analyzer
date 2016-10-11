@@ -1,0 +1,19 @@
+{
+  "name": "hls-har-analyzer",
+  "version": "1.0.0",
+  "description": "Analyze HLS related traffic in a HAR file.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "hls",
+    "har"
+  ],
+  "author": "David LaPalomento",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "bootstrap": "^3.3.7",
+    "express": "^4.14.0"
+  }
+}
