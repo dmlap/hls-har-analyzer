@@ -9,6 +9,8 @@ var upload = multer({
   }
 });
 
+var collectHlsSession = require('./hls-session');
+
 // the HAR currently being analyzed
 // this variable is set whenever the user uploads a new HAR file
 var activeHlsSession = null;
@@ -20,15 +22,38 @@ app.use('/bootstrap', express.static(__dirname + '/node_modules/bootstrap'));
 
 app.post('/har', upload.single('har-file'), function(request, response, next) {
   var error;
+  var har;
 
   try {
-    activeHlsSession = JSON.parse(request.file.buffer.toString('utf8'));
+    har = JSON.parse(request.file.buffer.toString('utf8'));
   } catch(e) {
     error = {};
     error[e.name] = e.message;
     return response.status(500).send(error);
   }
-  response.sendStatus(200);
+
+  if (!har || !har.log || !har.log.entries) {
+    error = {
+      InvalidHar: 'Unable to locate HTTP requests in the uploaded file'
+    };
+    return response.status(500).send(error);
+  }
+
+  activeHlsSession = collectHlsSession(har);
+
+  response.status(200).send(activeHlsSession.map(function(entry) {
+    return {
+      request: {
+        method: entry.request.method,
+        url: entry.request.url
+      },
+      response: {
+        status: entry.response.status,
+        contentType: entry.response.contentType,
+        bodySize: entry.response.bodySize
+      }
+    };
+  }));
 });
 
 app.listen(7777, function() {
