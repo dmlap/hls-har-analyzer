@@ -51,8 +51,13 @@
     <div class="container">
 
       <section class="main">
-        <h1>HLS HAR Analyzer</h1>
-        <p class="lead">This will do something cool eventually.</p>
+        <form enctype="multipart/form-data">
+          <div class="form-group">
+            <label for="har-file-input">HAR File</label>
+            <input type="file" id="har-file-input" name="har-file">
+            <p class="help-block">Select the HAR file to analyze.</p>
+          </div>
+        </form>
       </div>
 
     </div><!-- /.container -->
@@ -62,7 +67,8 @@
          ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-    <script>window.jQuery || document.write('<script src="../../assets/js/vendor/jquery.min.js"><\/script>')</script>
-      <script src="bootstrap/dist/js/bootstrap.min.js"></script>
+    <script>window.jQuery || document.write('<' + 'script src="../../assets/js/vendor/jquery.min.js"><\/script>')</script>
+    <script src="bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="js/main.js"></script>
   </body>
 </html>
