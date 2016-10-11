@@ -50,15 +50,22 @@
 
     <div class="container">
 
-      <section class="main">
+      <section class="input">
         <form enctype="multipart/form-data">
+          <p class="status hidden">Waiting for your HAR file...</p>
           <div class="form-group">
             <label for="har-file-input">HAR File</label>
             <input type="file" id="har-file-input" name="har-file">
             <p class="help-block">Select the HAR file to analyze.</p>
           </div>
         </form>
-      </div>
+      </section>
+      <section class="results">
+        <p>
+          The HLS traffic in your HAR file will be displayed here
+          after you upload it.
+        </p>
+      </section>
 
     </div><!-- /.container -->
 

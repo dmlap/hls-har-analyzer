@@ -1,6 +1,22 @@
 body {
   padding-top: 50px;
 }
-.main {
+section {
   padding: 40px 15px;
+}
+form {
+  border-color: #ddd;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 4px;
+  padding: 12px;
+}
+
+.results table {
+  width: 100%;
+}
+.results td:first-child {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
