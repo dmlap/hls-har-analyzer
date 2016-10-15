@@ -40,7 +40,6 @@ $fileInput.on('change', function() {
       table.className = 'table table-hover table-condensed';
       tableHead.innerHTML = '<tr><th>' + [
         'Name',
-        'Method',
         'Status',
         'Type',
         'Size'
@@ -55,19 +54,24 @@ $fileInput.on('change', function() {
 
         if (!labels[entry.request.url]) {
           if (/video/.test(entry.response.contentType)) {
-            labels[entry.request.url] = 'segment ' + nextSegmentId;
+            labels[entry.request.url] = {
+              text: 'segment ' + nextSegmentId,
+              basename: 'segment-' + nextSegmentId + '.ts'
+            };
             nextSegmentId++;
           } else {
-            labels[entry.request.url] = 'm3u8 ' + nextM3u8Id;
+            labels[entry.request.url] = {
+              text: 'm3u8 ' + nextM3u8Id,
+              basename: 'index-' + nextM3u8Id + '.m3u8'
+            };
             nextM3u8Id++;
           }
         }
 
         row.innerHTML = '<td>' + [
-          '<a href="/replay/' + i + '" title="' + entry.request.url
-            + '" target="_blank">'
-            + labels[entry.request.url] + '</a>',
-          entry.request.method,
+          '<a href="/replay/' + i + '/' + labels[entry.request.url].basename
+            + '" title="' + entry.request.url + '" target="_blank">'
+            + labels[entry.request.url].text + '</a>',
 
           entry.response.status,
           entry.response.contentType,

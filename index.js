@@ -58,7 +58,7 @@ app.post('/har', upload.single('har-file'), function(request, response, next) {
   }));
 });
 
-app.get('/replay/:index', function(request, response) {
+app.get('/replay/:index/*', function(request, response) {
   var content;
 
   if (!activeHlsSession ||
