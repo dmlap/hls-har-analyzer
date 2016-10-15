@@ -1,3 +1,5 @@
+'use strict';
+
 var TS_MIME_TYPE = /video\/mp2t/i;
 var M3U8_MIME_TYPE = /application\/vnd.apple.mpegurl|application\/x-mpegurl/i;
 

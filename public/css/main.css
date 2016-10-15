@@ -20,3 +20,6 @@ form {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.results td:nth-child(5) {
+  text-align: right;
+}

@@ -1,3 +1,5 @@
+'use strict';
+
 var express = require('express');
 var app = express();
 var logger = require('morgan')('dev');
@@ -54,6 +56,24 @@ app.post('/har', upload.single('har-file'), function(request, response, next) {
       }
     };
   }));
+});
+
+app.get('/replay/:index', function(request, response) {
+  var content;
+
+  if (!activeHlsSession ||
+      request.params.index < 0 ||
+      request.params.index >= activeHlsSession.length) {
+    return response.sendStatus(400);
+  }
+
+  content = activeHlsSession[request.params.index].response.content;
+  if (content.encoding && content.encoding === 'base64') {
+    return response.status(200)
+      .set('Content-Type', content.mimeType)
+      .send(new Buffer(content.text, 'base64').toString());
+  }
+  response.status(200).send(content.text);
 });
 
 app.listen(7777, function() {
