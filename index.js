@@ -12,6 +12,8 @@ var upload = multer({
 });
 
 var collectHlsSession = require('./hls-session');
+var replay = require('./replay').replay;
+var decrypt = require('./replay').decrypt;
 
 // the HAR currently being analyzed
 // this variable is set whenever the user uploads a new HAR file
@@ -21,6 +23,7 @@ app.use(logger);
 
 app.use(express.static(__dirname + '/public'));
 app.use('/bootstrap', express.static(__dirname + '/node_modules/bootstrap'));
+app.use('/aes-decrypter', express.static(__dirname + '/node_modules/aes-decrypter'))
 
 app.post('/har', upload.single('har-file'), function(request, response, next) {
   var error;
@@ -50,6 +53,7 @@ app.post('/har', upload.single('har-file'), function(request, response, next) {
         url: entry.request.url
       },
       response: {
+        encrypted: !!entry.key,
         status: entry.response.status,
         contentType: entry.response.contentType,
         bodySize: entry.response.bodySize
@@ -58,23 +62,13 @@ app.post('/har', upload.single('har-file'), function(request, response, next) {
   }));
 });
 
-app.get('/replay/:index/*', function(request, response) {
-  var content;
+function attachHlsSession(request, response, next) {
+  response.locals.activeHlsSession = activeHlsSession;
+  next();
+}
 
-  if (!activeHlsSession ||
-      request.params.index < 0 ||
-      request.params.index >= activeHlsSession.length) {
-    return response.sendStatus(400);
-  }
-
-  content = activeHlsSession[request.params.index].response.content;
-  if (content.encoding && content.encoding === 'base64') {
-    return response.status(200)
-      .set('Content-Type', content.mimeType)
-      .send(new Buffer(content.text, 'base64').toString());
-  }
-  response.status(200).send(content.text);
-});
+app.get('/replay/:index/*', attachHlsSession, replay);
+app.get('/decrypt/:index/*', attachHlsSession, decrypt);
 
 app.listen(7777, function() {
   console.log('HLS HAR Analyzer running at http://localhost:7777/\n');

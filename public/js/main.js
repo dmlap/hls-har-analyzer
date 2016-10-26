@@ -5,6 +5,39 @@ var $form = $fileInput.parents('form');
 var $formGroup = $fileInput.parents('form-group');
 var $formStatus = $form.find('.status');
 
+function indexUrls(entries) {
+  var nextSegmentId = 0;
+  var nextM3u8Id = 0;
+  var nextKeyId = 0;
+  var labels = {};
+
+  entries.forEach(function(entry, i) {
+    if (!labels[entry.request.url]) {
+      if (/video/.test(entry.response.contentType)) {
+        labels[entry.request.url] = {
+          text: 'segment ' + nextSegmentId,
+          basename: 'segment-' + nextSegmentId + '.ts'
+        };
+        nextSegmentId++;
+      } else if (/octet-stream/.test(entry.response.contentType)) {
+        labels[entry.request.url] = {
+          text: 'key ' + nextKeyId,
+          basename: 'key-' + nextKeyId
+        };
+        nextKeyId++;
+      } else {
+        labels[entry.request.url] = {
+          text: 'm3u8 ' + nextM3u8Id,
+          basename: 'index-' + nextM3u8Id + '.m3u8'
+        };
+        nextM3u8Id++;
+      }
+    }
+  });
+
+  return labels;
+};
+
 $fileInput.on('change', function() {
   var formData = new FormData($form[0]);
 
@@ -33,13 +66,14 @@ $fileInput.on('change', function() {
       var table = document.createElement('table');
       var tableHead = document.createElement('thead');
       var tableBody = document.createElement('tbody');
-      var nextSegmentId = 0;
-      var nextM3u8Id = 0;
-      var labels = {};
+
+      var labels = indexUrls(entries);
+      var lastKey;
 
       table.className = 'table table-hover table-condensed';
       tableHead.innerHTML = '<tr><th>' + [
         'Name',
+        'Decrypted',
         'Status',
         'Type',
         'Size'
@@ -48,30 +82,17 @@ $fileInput.on('change', function() {
       table.appendChild(tableBody);
       fragment.appendChild(table);
 
-
       entries.forEach(function(entry, i) {
         var row = document.createElement('tr');
-
-        if (!labels[entry.request.url]) {
-          if (/video/.test(entry.response.contentType)) {
-            labels[entry.request.url] = {
-              text: 'segment ' + nextSegmentId,
-              basename: 'segment-' + nextSegmentId + '.ts'
-            };
-            nextSegmentId++;
-          } else {
-            labels[entry.request.url] = {
-              text: 'm3u8 ' + nextM3u8Id,
-              basename: 'index-' + nextM3u8Id + '.m3u8'
-            };
-            nextM3u8Id++;
-          }
-        }
 
         row.innerHTML = '<td>' + [
           '<a href="/replay/' + i + '/' + labels[entry.request.url].basename
             + '" title="' + entry.request.url + '" target="_blank">'
             + labels[entry.request.url].text + '</a>',
+
+          entry.response.encrypted ? '<a href="/decrypt/' + i + '/' + labels[entry.request.url].basename
+            + '" title="' + entry.request.url + '" target="_blank">' +
+            'decrypted</a>' : '',
 
           entry.response.status,
           entry.response.contentType,

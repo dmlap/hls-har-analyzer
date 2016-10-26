@@ -13,6 +13,7 @@
   "author": "David LaPalomento",
   "license": "Apache-2.0",
   "dependencies": {
+    "aes-decrypter": "^1.0.3",
     "bootstrap": "^3.3.7",
     "express": "^4.14.0",
     "morgan": "^1.7.0",
