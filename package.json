@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Analyze HLS related traffic in a HAR file.",
   "main": "index.js",
+  "engines" : {
+    "node" : ">=6.0"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
