@@ -42,6 +42,11 @@ faster.
 Once you have the server running, open the [main
 page](http://localhost:7777) in a modern browser of your choice. Use
 the input form at the top to upload your HAR file and then you'll see
-a table this:
+a table like this:
 
 ![screenshot](docs/screenshot.png)
+
+From here, you can click on a file name to download it (or open it in
+a browser window) directly. If it's a TS segment that appears to be
+encrypted, you can click the "decrypted" link to download a clear
+version of the segment.
