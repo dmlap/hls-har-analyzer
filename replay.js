@@ -33,14 +33,6 @@ function replay(request, response) {
 }
 
 function decrypt(request, response, next) {
-  var ints = '0x0000000000000000000000000008E620'
-      .match(/^0?x?(.{8})(.{8})(.{8})(.{8})/i);
-  var iv = new Uint32Array([
-    parseInt(ints[1], 16),
-    parseInt(ints[2], 16),
-    parseInt(ints[3], 16),
-    parseInt(ints[4], 16)
-  ]);
   var entry, activeHlsSession;
 
   activeHlsSession = response.locals.activeHlsSession;
@@ -53,7 +45,7 @@ function decrypt(request, response, next) {
   entry = activeHlsSession[request.params.index];
   new Decrypter(new Uint8Array(new Buffer(entry.response.content.text, 'base64').buffer),
                 entry.key,
-                iv,
+                entry.iv,
                 function(error, decrypted) {
                   if (error) {
                     return response.sendStatus(400);

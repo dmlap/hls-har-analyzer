@@ -1,13 +1,15 @@
 'use strict';
 
-var aes = require('aes-decrypter');
+let aes = require('aes-decrypter');
+let m3u8 = require('m3u8-parser');
+let URL = require('url');
 
-var TS_MIME_TYPE = /video\/mp2t/i;
-var M3U8_MIME_TYPE = /application\/vnd.apple.mpegurl|application\/x-mpegurl/i;
-var KEY_MIME_TYPE = /application\/octet-stream/i;
+let TS_MIME_TYPE = /video\/mp2t/i;
+let M3U8_MIME_TYPE = /application\/vnd.apple.mpegurl|application\/x-mpegurl/i;
+let KEY_MIME_TYPE = /application\/octet-stream/i;
 
-var findHeaderValue = function(headers, name) {
-  var header = headers.find(function(header) {
+let findHeaderValue = function(headers, name) {
+  let header = headers.find(function(header) {
     return header.name === name;
   }) || {};
   return header.value;
@@ -20,12 +22,11 @@ var findHeaderValue = function(headers, name) {
  * @see http://www.softwareishard.com/blog/har-12-spec/
  */
 module.exports = function collectHlsSession(har) {
-  var lastM3u8;
-  var lastKey;
-  let keyContent;
-  var decrypter;
-  var result = [];
-
+  let m3u8Parser;
+  let result = [];
+  let lastM3U8;
+  let lastKey;
+  let decrypter;
 
   har.log.entries.forEach(function(entry) {
     // annotate the response objects with the content type found in
@@ -39,13 +40,33 @@ module.exports = function collectHlsSession(har) {
 
     // m3u8s
     if (M3U8_MIME_TYPE.test(entry.response.contentType)) {
+
+      m3u8Parser = new m3u8.Parser();
+      m3u8Parser.push(new Buffer(entry.response.content.text, 'base64').toString());
+      lastM3U8 = m3u8Parser.manifest;
+      lastM3U8.uri = entry.request.url;
+
       return result.push(entry);
     }
     // TS files
     if (TS_MIME_TYPE.test(entry.response.contentType)) {
 
-      if (lastKey) {
-        entry.key = lastKey;
+      // annotate the entry with encryption information if it can be
+      // determined from the last M3U8
+      if (lastKey && lastM3U8) {
+        let segmentIndex = lastM3U8.segments.findIndex((segment) => {
+          return segment.key &&
+            URL.resolve(lastM3U8.uri, segment.uri) === entry.request.url;
+        });
+        let segment = lastM3U8.segments[segmentIndex];
+
+        if (segment) {
+          entry.iv = segment.key.iv || new Uint32Array([
+            0, 0, 0,
+            lastM3U8.mediaSequence + segmentIndex
+          ]);
+          entry.key = lastKey;
+        }
       }
 
       return result.push(entry);
@@ -54,6 +75,8 @@ module.exports = function collectHlsSession(har) {
     // decryption keys
     if (KEY_MIME_TYPE.test(entry.response.contentType) &&
         entry.response.bodySize === 16) {
+      let keyContent;
+
       keyContent = new Buffer(entry.response.content.text, 'base64');
       lastKey = new Uint32Array([
         keyContent.readUInt32BE(0),
