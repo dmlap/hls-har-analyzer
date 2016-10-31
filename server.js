@@ -14,12 +14,20 @@ var upload = multer({
 var collectHlsSession = require('./hls-session');
 var replay = require('./replay').replay;
 var decrypt = require('./replay').decrypt;
+var replayPlaylist = require('./m3u8-generator');
 
 // the HAR currently being analyzed
 // this variable is set whenever the user uploads a new HAR file
 var activeHlsSession = null;
 
 app.use(logger);
+
+// CORS
+app.use(function(req, res, next) {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+});
 
 app.use(express.static(__dirname + '/public'));
 app.use('/bootstrap', express.static(__dirname + '/node_modules/bootstrap'));
@@ -69,6 +77,7 @@ function attachHlsSession(request, response, next) {
 
 app.get('/replay/:index/*', attachHlsSession, replay);
 app.get('/decrypt/:index/*', attachHlsSession, decrypt);
+app.get('/m3u8/:start-:end', attachHlsSession, replayPlaylist);
 
 app.listen(7777, function() {
   console.log('HLS HAR Analyzer running at http://localhost:7777/\n');

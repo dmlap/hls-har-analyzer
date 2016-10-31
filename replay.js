@@ -2,8 +2,9 @@
  * Middleware for replaying requests from an HLS session
  */
 
-var Decrypter = require('aes-decrypter').Decrypter;
+let M3U8_MIME_TYPE = require('./mime-types').M3U8_MIME_TYPE;
 
+var Decrypter = require('aes-decrypter').Decrypter;
 
 /**
  * Expects an `:index` parameter on the request object and an HLS
@@ -22,7 +23,7 @@ function replay(request, response) {
   content = activeHlsSession[request.params.index].response.content;
   response.status(200);
   if (content.encoding && content.encoding === 'base64') {
-    if ((/mpeg/).test(content.mimeType)) {
+    if (M3U8_MIME_TYPE.test(content.mimeType)) {
       response.set('Content-Type', 'text/plain');
     } else {
       response.set('Content-Type', content.mimeType);
@@ -34,6 +35,7 @@ function replay(request, response) {
 
 function decrypt(request, response, next) {
   var entry, activeHlsSession;
+  console.log('decrypting:', request.url);
 
   activeHlsSession = response.locals.activeHlsSession;
   if (!activeHlsSession ||
@@ -43,16 +45,21 @@ function decrypt(request, response, next) {
   }
 
   entry = activeHlsSession[request.params.index];
-  new Decrypter(new Uint8Array(new Buffer(entry.response.content.text, 'base64').buffer),
-                entry.key,
-                entry.iv,
-                function(error, decrypted) {
-                  if (error) {
-                    return response.sendStatus(400);
-                  }
-                  response.set('Content-Type', 'video/mp2t');
-                  return response.send(Buffer.from(decrypted.buffer));
-                });
+  try {
+    new Decrypter(new Uint8Array(new Buffer(entry.response.content.text, 'base64').buffer),
+                  entry.key,
+                  entry.iv,
+                  function(error, decrypted) {
+                    if (error) {
+                      return response.sendStatus(400);
+                    }
+                    response.set('Content-Type', 'video/mp2t');
+                    return response.send(Buffer.from(decrypted.buffer));
+                  });
+  } catch(e) {
+    response.status(400);
+    response.send(e);
+  }
 }
 
 module.exports = {

@@ -4,9 +4,10 @@ let aes = require('aes-decrypter');
 let m3u8 = require('m3u8-parser');
 let URL = require('url');
 
-let TS_MIME_TYPE = /video\/mp2t/i;
-let M3U8_MIME_TYPE = /application\/vnd.apple.mpegurl|application\/x-mpegurl/i;
-let KEY_MIME_TYPE = /application\/octet-stream/i;
+let mimes = require('./mime-types');
+let TS_MIME_TYPE = mimes.TS_MIME_TYPE;
+let M3U8_MIME_TYPE = mimes.M3U8_MIME_TYPE;
+let KEY_MIME_TYPE = mimes.KEY_MIME_TYPE;
 
 let findHeaderValue = function(headers, name) {
   let header = headers.find(function(header) {
@@ -51,21 +52,23 @@ module.exports = function collectHlsSession(har) {
     // TS files
     if (TS_MIME_TYPE.test(entry.response.contentType)) {
 
-      // annotate the entry with encryption information if it can be
-      // determined from the last M3U8
-      if (lastKey && lastM3U8) {
+      // annotate the entry with info from the last M3U8
+      if (lastM3U8) {
         let segmentIndex = lastM3U8.segments.findIndex((segment) => {
-          return segment.key &&
-            URL.resolve(lastM3U8.uri, segment.uri) === entry.request.url;
+          return URL.resolve(lastM3U8.uri, segment.uri) === entry.request.url;
         });
         let segment = lastM3U8.segments[segmentIndex];
 
         if (segment) {
-          entry.iv = segment.key.iv || new Uint32Array([
-            0, 0, 0,
-            lastM3U8.mediaSequence + segmentIndex
-          ]);
-          entry.key = lastKey;
+          entry.duration = segment.duration || lastM3U8.targetDuration;
+
+          if (lastKey) {
+            entry.iv = segment.key.iv || new Uint32Array([
+              0, 0, 0,
+              lastM3U8.mediaSequence + segmentIndex
+            ]);
+            entry.key = lastKey;
+          }
         }
       }
 
