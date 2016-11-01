@@ -77,6 +77,7 @@ function attachHlsSession(request, response, next) {
 
 app.get('/replay/:index/*', attachHlsSession, replay);
 app.get('/decrypt/:index/*', attachHlsSession, decrypt);
+app.get('/m3u8', attachHlsSession, replayPlaylist);
 app.get('/m3u8/:start-:end', attachHlsSession, replayPlaylist);
 
 app.listen(7777, function() {

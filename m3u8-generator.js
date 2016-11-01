@@ -30,12 +30,17 @@ function replayPlaylist(request, response, next) {
   let segments = activeHlsSession.reduce((result, entry, i) => {
     if (TS_MIME_TYPE.test(entry.response.contentType)) {
       result.push([i, entry]);
-      return result;
     }
     return result;
   }, []);
   let start = Math.max(parseInt(request.params.start, 10), 0);
-  let end = Math.min(parseInt(request.params.end, 10), segments.length);
+  let end;
+
+  if (request.params.end) {
+    end = Math.min(parseInt(request.params.end, 10), segments.length);
+  } else {
+    end = segments.length;
+  }
 
   response.status(200);
   response.set('Content-Type', 'application/x-mpegURL');

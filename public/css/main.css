@@ -12,6 +12,10 @@ form {
   padding: 12px;
 }
 
+.filter {
+  text-align: center;
+}
+
 .results table {
   width: 100%;
 }
@@ -20,6 +24,6 @@ form {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.results td:nth-child(5) {
+.results td:nth-child(4) {
   text-align: right;
 }

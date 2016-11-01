@@ -47,7 +47,22 @@
         </form>
       </section>
       <section class="results">
-        <p>
+        <div class="filter">
+          <p class="form-inline">
+            Viewing segment requests
+            <input class="form-control start-segment" type="number" value="0" min=0 disabled>
+            through
+            <input class="form-control end-segment" type="number" min=0 disabled>
+          </p>
+          <p class="replay">
+            &hellip;or play back this sequence by loading
+            <a class="replay-src"
+               href="/m3u8/">http://localhost:7777/m3u8/</a> into a
+            player
+          </p>
+        </div>
+        <hr>
+        <p class="har-entries">
           The HLS traffic in your HAR file will be displayed here
           after you upload it.
         </p>
