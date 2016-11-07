@@ -46,7 +46,13 @@ a table like this:
 
 ![screenshot](docs/screenshot.png)
 
-From here, you can click on a file name to download it (or open it in
-a browser window) directly. If it's a TS segment that appears to be
+From here, you can:
+
+- Examine responses: click on a file name to download it (or open it
+in a browser window) directly. If it's a TS segment that appears to be
 encrypted, you can click the "decrypted" link to download a clear
 version of the segment.
+- Replay the session: copy the m3u8 link at the top of the results
+area into a player to see a replay of the sequence of segments from
+the capture. You can use the text fields at the top of the results to
+filter the segments that appear in the replay m3u8.
