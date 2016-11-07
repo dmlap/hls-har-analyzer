@@ -25,6 +25,7 @@ let findHeaderValue = function(headers, name) {
 module.exports = function collectHlsSession(har) {
   let m3u8Parser;
   let result = [];
+  let needsKeys = [];
   let lastM3U8;
   let lastKey;
   let decrypter;
@@ -49,6 +50,7 @@ module.exports = function collectHlsSession(har) {
 
       return result.push(entry);
     }
+
     // TS files
     if (TS_MIME_TYPE.test(entry.response.contentType)) {
 
@@ -62,12 +64,17 @@ module.exports = function collectHlsSession(har) {
         if (segment) {
           entry.duration = segment.duration || lastM3U8.targetDuration;
 
-          if (lastKey) {
+          if (segment.key) {
             entry.iv = segment.key.iv || new Uint32Array([
               0, 0, 0,
               lastM3U8.mediaSequence + segmentIndex
             ]);
-            entry.key = lastKey;
+
+            if (lastKey) {
+              entry.key = lastKey;
+            } else {
+              needsKeys.push([segment, entry]);
+            }
           }
         }
       }
@@ -87,6 +94,21 @@ module.exports = function collectHlsSession(har) {
         keyContent.readUInt32BE(8),
         keyContent.readUInt32BE(12)
       ]);
+
+      // annotate any segments that were missing keys when first
+      // encountered
+      if (lastM3U8) {
+        needsKeys = needsKeys.reduce((result, segmentEntry) => {
+          if (lastM3U8 &&
+              URL.resolve(lastM3U8.uri, segmentEntry[0].key.uri) === entry.request.url) {
+            segmentEntry[1].key = lastKey;
+          } else {
+            result.push(segmentEntry);
+          }
+          return result;
+        }, []);
+      }
+
       result.push(entry);
     }
   });
