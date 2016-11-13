@@ -43,38 +43,55 @@ module.exports = function collectHlsSession(har) {
     // m3u8s
     if (M3U8_MIME_TYPE.test(entry.response.contentType)) {
 
-      m3u8Parser = new m3u8.Parser();
-      m3u8Parser.push(new Buffer(entry.response.content.text, 'base64').toString());
-      lastM3U8 = m3u8Parser.manifest;
-      lastM3U8.uri = entry.request.url;
+      if (entry.response.content.text) {
+        m3u8Parser = new m3u8.Parser();
+        m3u8Parser.push(new Buffer(entry.response.content.text, 'base64').toString());
+
+        // store the active variant playlist
+        if (m3u8Parser.manifest.segments) {
+          lastM3U8 = m3u8Parser.manifest;
+          lastM3U8.uri = entry.request.url;
+          entry.playlistType = 'variant';
+        } else {
+          entry.playlistType = 'master';
+        }
+      }
 
       return result.push(entry);
     }
 
     // TS files
+    let matchesTsMimeType = TS_MIME_TYPE.test(entry.response.contentType);
+    let segmentIndex;
+    let segment;
+
+    // if the request URL matches a segment URL, fix the content type
+    // if necessary
+    if (lastM3U8) {
+      segmentIndex = lastM3U8.segments.findIndex((segment) => {
+        return URL.resolve(lastM3U8.uri, segment.uri) === entry.request.url;
+      });
+      segment = lastM3U8.segments[segmentIndex];
+      if (segment) {
+        entry.response.contentType = 'video/mp2t';
+      }
+    }
     if (TS_MIME_TYPE.test(entry.response.contentType)) {
 
       // annotate the entry with info from the last M3U8
-      if (lastM3U8) {
-        let segmentIndex = lastM3U8.segments.findIndex((segment) => {
-          return URL.resolve(lastM3U8.uri, segment.uri) === entry.request.url;
-        });
-        let segment = lastM3U8.segments[segmentIndex];
+      if (segment) {
+        entry.duration = segment.duration || lastM3U8.targetDuration;
 
-        if (segment) {
-          entry.duration = segment.duration || lastM3U8.targetDuration;
+        if (segment.key) {
+          entry.iv = segment.key.iv || new Uint32Array([
+            0, 0, 0,
+            lastM3U8.mediaSequence + segmentIndex
+          ]);
 
-          if (segment.key) {
-            entry.iv = segment.key.iv || new Uint32Array([
-              0, 0, 0,
-              lastM3U8.mediaSequence + segmentIndex
-            ]);
-
-            if (lastKey) {
-              entry.key = lastKey;
-            } else {
-              needsKeys.push([segment, entry]);
-            }
+          if (lastKey) {
+            entry.key = lastKey;
+          } else {
+            needsKeys.push([segment, entry]);
           }
         }
       }
@@ -83,17 +100,41 @@ module.exports = function collectHlsSession(har) {
     }
 
     // decryption keys
+    // if the request matches a key URL, fix the content type if
+    // necessary
+    if (lastM3U8) {
+      let matchesKeyUrl = lastM3U8.segments.filter((segment) => segment.key).find((segment) => {
+        return URL.resolve(lastM3U8.uri, segment.key.uri) === entry.request.url;
+      });
+
+      if (matchesKeyUrl) {
+        entry.response.contentType = 'application/octet-stream';
+      }
+    }
     if (KEY_MIME_TYPE.test(entry.response.contentType) &&
         entry.response.bodySize === 16) {
       let keyContent;
 
-      keyContent = new Buffer(entry.response.content.text, 'base64');
-      lastKey = new Uint32Array([
-        keyContent.readUInt32BE(0),
-        keyContent.readUInt32BE(4),
-        keyContent.readUInt32BE(8),
-        keyContent.readUInt32BE(12)
-      ]);
+      if (entry.response.content.text) {
+        if (entry.response.content.encoding === 'base64') {
+          // correctly captured keys will be base64 encoded
+          keyContent = new Buffer(entry.response.content.text, 'base64');
+          console.log('b64', entry.response.content.text, keyContent.length);
+        } else {
+          // the bytes of the key were directly encoded as text
+          keyContent = new Buffer(entry.response.content.text, 'binary');
+          console.log('text', entry.response.content.text, keyContent.length);
+        }
+
+        if (keyContent.length === 16) {
+          lastKey = new Uint32Array([
+            keyContent.readUInt32BE(0),
+            keyContent.readUInt32BE(4),
+            keyContent.readUInt32BE(8),
+            keyContent.readUInt32BE(12)
+          ]);
+        }
+      }
 
       // annotate any segments that were missing keys when first
       // encountered

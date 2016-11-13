@@ -55,18 +55,25 @@ app.post('/har', upload.single('har-file'), function(request, response, next) {
   activeHlsSession = collectHlsSession(har);
 
   response.status(200).send(activeHlsSession.map(function(entry) {
-    return {
+    var result = {
       request: {
         method: entry.request.method,
         url: entry.request.url
       },
       response: {
-        encrypted: !!entry.key,
         status: entry.response.status,
         contentType: entry.response.contentType,
         bodySize: entry.response.bodySize
       }
     };
+    if (entry.key) {
+      result.response.encrypted = true;
+    }
+    if (entry.playlistType) {
+      result.response.playlistType = entry.playlistType;
+    }
+
+    return result;
   }));
 });
 

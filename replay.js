@@ -22,13 +22,18 @@ function replay(request, response) {
 
   content = activeHlsSession[request.params.index].response.content;
   response.status(200);
-  if (content.encoding && content.encoding === 'base64') {
+  if (content.encoding === 'base64') {
     if (M3U8_MIME_TYPE.test(content.mimeType)) {
       response.set('Content-Type', 'text/plain');
     } else {
       response.set('Content-Type', content.mimeType);
     }
-    return response.send(new Buffer(content.text, 'base64').toString());
+    return response.send(new Buffer(content.text, 'base64'));
+  }
+
+  response.set('Content-Type', activeHlsSession[request.params.index].response.contentType);
+  if (activeHlsSession[request.params.index].response.contentType === 'application/octet-stream') {
+    return response.send(new Buffer(content.text, 'binary'));
   }
   response.send(content.text);
 }

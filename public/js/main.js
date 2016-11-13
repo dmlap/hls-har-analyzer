@@ -33,7 +33,7 @@ function indexUrls(entries) {
       } else {
         labels[entry.request.url] = {
           attr: ['data-m3u8', nextM3u8Id],
-          text: 'm3u8 ' + nextM3u8Id,
+          text: entry.response.playlistType + ' m3u8 ' + nextM3u8Id,
           basename: 'index-' + nextM3u8Id + '.m3u8'
         };
         nextM3u8Id++;
