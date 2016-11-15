@@ -1,3 +1,7 @@
+/***********
+ * General *
+ ***********/
+
 body {
   padding-top: 50px;
 }
@@ -12,18 +16,52 @@ form {
   padding: 12px;
 }
 
-.filter {
-  text-align: center;
+/*********
+ * Input *
+ *********/
+
+.awaiting-input .input {
+  display: block;
+}
+.input {
+  display: none;
 }
 
-.results table {
-  width: 100%;
+/************
+ * Analysis *
+ ************/
+
+.awaiting-input .analysis {
+  display: none;
 }
-.results td:first-child {
+.analysis {
+  display: flex;
+}
+
+.analysis .entries-index {
+  flex: 1;
+  width: auto;
+}
+.analysis td:first-child {
   max-width: 150px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.results td:nth-child(4) {
+.analysis td:nth-child(4) {
   text-align: right;
+}
+
+.details {
+  flex: 1;
+  padding: 10px;
+}
+
+.viewing-entry .overview-pane {
+  display: none;
+}
+.entry-pane {
+  display: none;
+}
+.viewing-entry .entry-pane {
+  display: block;
 }

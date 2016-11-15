@@ -1,12 +1,69 @@
 'use strict';
 
+/***********
+ * General *
+ ***********/
+
+var entries;
+var inputName;
+var $main = $('.main');
+
+/**************
+ * Navigation *
+ **************/
+
+$main.on('entrieschange', function() {
+  $('.input-name').text('Analyzing: ' + inputName);
+});
+
+/*********
+ * Input *
+ *********/
+
 var $fileInput = $('#har-file-input');
 var $form = $fileInput.parents('form');
 var $formGroup = $fileInput.parents('form-group');
 var $formStatus = $form.find('.status');
 
-var $startSegment = $('.start-segment');
-var $endSegment = $('.end-segment');
+// HAR Input
+$fileInput.on('change', function() {
+  var formData = new FormData($form[0]);
+
+  $formStatus.empty();
+  $formGroup.removeClass('has-error');
+  inputName = $fileInput.val().split('\\').splice(-1)[0];
+
+  $.ajax({
+    url: '/har',
+    type: 'POST',
+    data: formData,
+    processData: false,
+    contentType: false,
+
+    error: function(xhr, textStatus) {
+      $formGroup.addClass('has-error');
+
+      $formStatus
+        .html('Oops! Something went wrong:<br><small><code>' +
+              xhr.responseText +
+              '</code></small>')
+        .removeClass('hidden')
+        .addClass('bg-danger');
+    },
+    success: function(data) {
+      entries = data;
+      $main
+        .removeClass('awaiting-input')
+        .trigger('entrieschange');
+    }
+  });
+});
+
+/************
+ * Analysis *
+ ************/
+
+// ---- Entry Index ---- //
 
 function indexUrls(entries) {
   var nextSegmentId = 0;
@@ -79,12 +136,55 @@ function buildTable(entries) {
       entry.response.bodySize
     ].join('</td><td>') + '</td>';
 
+    $(row).data('entry', entry);
+
     tableBody.appendChild(row);
   });
 
   return table;
 }
 
+function renderHar() {
+  var fragment = document.createDocumentFragment();
+  var table = buildTable(entries);
+  var $table = $(table);
+  var $selectedRow;
+  fragment.appendChild(table);
+
+  $('.analysis .har-entries').replaceWith(fragment);
+  $table.on('click', function(event) {
+    var $target = $(event.target);
+    var $row;
+
+    if (!$target.is('a')) {
+      return;
+    }
+
+    event.preventDefault();
+    $row = $target.parents('tr');
+
+    if ($selectedRow) {
+      $selectedRow.removeClass('info');
+    }
+    $row.addClass('info');
+    $selectedRow = $row;
+
+    $main.addClass('viewing-entry');
+    $main.trigger('selectionchange');
+  });
+
+  $main.trigger('entriesready');
+}
+
+$main.on('entrieschange', renderHar);
+
+
+// ---- Details Pane ---- //
+
+var $startSegment = $('.start-segment');
+var $endSegment = $('.end-segment');
+
+// Overview Pane
 function applyFilter() {
   var start = parseInt($startSegment.val(), 10);
   var end = parseInt($endSegment.val(), 10);
@@ -114,44 +214,17 @@ function updateFilter() {
       .removeAttr('disabled');
 }
 
-function renderHar(entries) {
-  var fragment = document.createDocumentFragment();
-  var table = buildTable(entries);
-  fragment.appendChild(table);
-
-  $('.results .har-entries').remove();
-  $('.results').append(fragment);
-  updateFilter();
-}
-
-
-// Segment Filter
+$main.on('entriesready', updateFilter);
 $startSegment.add($endSegment).on('change', applyFilter);
 
-// HAR Input
-$fileInput.on('change', function() {
-  var formData = new FormData($form[0]);
+// Entry Pane
+var $entryPane = $('.entry-pane');
 
-  $formStatus.empty();
-  $formGroup.removeClass('has-error');
+$main.on('selectionchange', function() {
+  var $selectedRow = $('.har-entries .info');
+  var entry = $selectedRow.data('entry');
 
-  $.ajax({
-    url: '/har',
-    type: 'POST',
-    data: formData,
-    processData: false,
-    contentType: false,
-
-    error: function(xhr, textStatus) {
-      $formGroup.addClass('has-error');
-
-      $formStatus
-        .html('Oops! Something went wrong:<br><small><code>' +
-              xhr.responseText +
-              '</code></small>')
-        .removeClass('hidden')
-        .addClass('bg-danger');
-    },
-    success: renderHar
-  });
+  $entryPane.find('.original-url')
+    .html('<a href="' + entry.request.url + '">' + entry.request.url +'</a>');
+  $entryPane.find('.download').attr('href', $selectedRow.find('a').attr('href'));
 });

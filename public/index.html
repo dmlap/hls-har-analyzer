@@ -30,11 +30,11 @@
     <nav class="navbar navbar-inverse navbar-fixed-top">
       <div class="container">
           <a class="navbar-brand" href="#">HLS HAR Analyzer</a>
-        </div>
+          <p class="navbar-text input-name">Beep, boop... input??</p>
       </div>
     </nav>
 
-    <div class="container">
+    <div class="main container awaiting-input">
 
       <section class="input">
         <form enctype="multipart/form-data">
@@ -46,36 +46,50 @@
           </div>
         </form>
       </section>
-      <section class="results">
-        <div class="filter">
-          <p class="form-inline">
-            Viewing segment requests
-            <input class="form-control start-segment" type="number" value="0" min=0 disabled>
-            through
-            <input class="form-control end-segment" type="number" min=0 disabled>
-          </p>
-          <p class="replay">
-            &hellip;or play back this sequence by loading
-            <a class="replay-src"
-               href="/m3u8/">http://localhost:7777/m3u8/</a> into a
-            player
+
+      <section class="analysis">
+        <div class="entries-index">
+          <h3>Requests</h3>
+          <p class="har-entries">
+            The HLS traffic in your HAR file will be displayed here
+            after you upload it.
           </p>
         </div>
-        <hr>
-        <p class="har-entries">
-          The HLS traffic in your HAR file will be displayed here
-          after you upload it.
-        </p>
+
+        <div class="details">
+          <div class="overview-pane">
+            <h3>Overview</h3>
+            <p class="form-inline">
+              Viewing segment requests
+              <input class="form-control start-segment" type="number" value="0" min=0 disabled>
+              through
+              <input class="form-control end-segment" type="number" min=0 disabled>
+            </p>
+            <p class="replay">
+              &hellip;or play back this sequence by loading
+              <a class="replay-src"
+                 href="/m3u8/">http://localhost:7777/m3u8/</a> into a
+              player
+            </p>
+          </div>
+          <div class="entry-pane">
+            <h3>Details</h3>
+            <label>Original URL:</label>
+            <span class="original-url">
+              <a href="http://example.com/segment0.ts">
+                  http://example.com/segment0.ts
+                </a>
+            </span>
+            <a href="#" class="download">Download</a>
+            <a href="#" class="download-decrypted">Download Decrypted</a>
+          </div>
+        </div>
       </section>
 
     </div><!-- /.container -->
 
-
-    <!-- Bootstrap core JavaScript
-         ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-    <script>window.jQuery || document.write('<' + 'script src="../../assets/js/vendor/jquery.min.js"><\/script>')</script>
+    <script>window.jQuery || document.write('<' + 'script src="js/jquery.min.js"><\/script>')</script>
     <script src="bootstrap/dist/js/bootstrap.min.js"></script>
     <script src="js/main.js"></script>
   </body>
