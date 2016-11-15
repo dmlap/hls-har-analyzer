@@ -38,6 +38,7 @@ form {
   display: flex;
 }
 
+/* ---- Entry List ---- */
 .analysis .entries-index {
   flex: 1;
   width: auto;
@@ -51,9 +52,10 @@ form {
   text-align: right;
 }
 
-.details {
+/* ---- Overview and Entry Panes ----*/
+.overview-pane, .entry-pane {
   flex: 1;
-  padding: 10px;
+  margin: 10px;
 }
 
 .viewing-entry .overview-pane {
@@ -64,4 +66,8 @@ form {
 }
 .viewing-entry .entry-pane {
   display: block;
+}
+
+.close {
+  font-size: inherit;
 }

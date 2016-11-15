@@ -178,8 +178,12 @@ function renderHar() {
 
 $main.on('entrieschange', renderHar);
 
+$main.on('unselect', function() {
+  $main.find('.har-entries .info').removeClass('info');
+  $main.removeClass('viewing-entry');
+});
 
-// ---- Details Pane ---- //
+// ---- Overview and Entry Panes ---- //
 
 var $startSegment = $('.start-segment');
 var $endSegment = $('.end-segment');
@@ -227,4 +231,9 @@ $main.on('selectionchange', function() {
   $entryPane.find('.original-url')
     .html('<a href="' + entry.request.url + '">' + entry.request.url +'</a>');
   $entryPane.find('.download').attr('href', $selectedRow.find('a').attr('href'));
+});
+$
+
+$entryPane.find('.close').on('click', function() {
+  $main.trigger('unselect');
 });

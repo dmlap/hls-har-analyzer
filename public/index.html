@@ -49,16 +49,17 @@
 
       <section class="analysis">
         <div class="entries-index">
-          <h3>Requests</h3>
           <p class="har-entries">
             The HLS traffic in your HAR file will be displayed here
             after you upload it.
           </p>
         </div>
 
-        <div class="details">
-          <div class="overview-pane">
-            <h3>Overview</h3>
+        <div class="overview-pane panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">Overview</h3>
+          </div>
+          <div class="panel-body">
             <p class="form-inline">
               Viewing segment requests
               <input class="form-control start-segment" type="number" value="0" min=0 disabled>
@@ -72,13 +73,18 @@
               player
             </p>
           </div>
-          <div class="entry-pane">
-            <h3>Details</h3>
+        </div>
+        <div class="entry-pane panel panel-info">
+          <div class="panel-heading">
+            <span class="close glyphicon glyphicon-remove" aria-hidden="true"></span>
+            <h3 class="panel-title">Details</h3>
+          </div>
+          <div class="panel-body">
             <label>Original URL:</label>
             <span class="original-url">
               <a href="http://example.com/segment0.ts">
-                  http://example.com/segment0.ts
-                </a>
+                http://example.com/segment0.ts
+              </a>
             </span>
             <a href="#" class="download">Download</a>
             <a href="#" class="download-decrypted">Download Decrypted</a>
