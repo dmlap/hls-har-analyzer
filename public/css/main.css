@@ -48,7 +48,7 @@ form {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.analysis td:nth-child(4) {
+.analysis td:nth-child(3) {
   text-align: right;
 }
 
@@ -70,4 +70,12 @@ form {
 
 .close {
   font-size: inherit;
+}
+.entry-pane .downloads {
+  list-style: none;
+  padding-left: 0;
+}
+.disabled a {
+  color: #777;
+  pointer-events: none;
 }

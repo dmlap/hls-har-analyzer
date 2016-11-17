@@ -112,7 +112,6 @@ function buildTable(entries) {
   table.className = 'table table-hover table-condensed har-entries';
   tableHead.innerHTML = '<tr><th>' + [
     'Name',
-    'Decrypted',
     'Status',
     'Size'
   ].join('</th><th>') + '</th></tr>';
@@ -122,16 +121,13 @@ function buildTable(entries) {
   entries.forEach(function(entry, i) {
     var row = document.createElement('tr');
     row.setAttribute.apply(row, labels[entry.request.url].attr);
+    row.setAttribute('data-index', i);
+    row.setAttribute('data-basename', labels[entry.request.url].basename);
 
     row.innerHTML = '<td>' + [
       '<a href="/replay/' + i + '/' + labels[entry.request.url].basename
         + '" title="' + entry.request.url + '" target="_blank">'
         + labels[entry.request.url].text + '</a>',
-
-      entry.response.encrypted ? '<a href="/decrypt/' + i + '/' + labels[entry.request.url].basename
-        + '" title="' + entry.request.url + '" target="_blank">' +
-        'decrypted</a>' : '',
-
       entry.response.status,
       entry.response.bodySize
     ].join('</td><td>') + '</td>';
@@ -227,12 +223,23 @@ var $entryPane = $('.entry-pane');
 $main.on('selectionchange', function() {
   var $selectedRow = $('.har-entries .info');
   var entry = $selectedRow.data('entry');
+  var index = $selectedRow.attr('data-index');
 
   $entryPane.find('.original-url')
     .html('<a href="' + entry.request.url + '">' + entry.request.url +'</a>');
-  $entryPane.find('.download').attr('href', $selectedRow.find('a').attr('href'));
+  $entryPane.find('.download a')
+    .attr('href', '/replay/' + index
+          + '/' + $selectedRow.attr('data-basename'));
+
+  if (entry.response.encrypted) {
+    $entryPane.find('.download-decrypted')
+      .removeClass('disabled')
+      .find('a').attr('href', '/decrypt/' + index
+                      + '/' + $selectedRow.attr('data-basename'));
+  } else {
+    $entryPane.find('.download-decrypted').addClass('disabled');
+  }
 });
-$
 
 $entryPane.find('.close').on('click', function() {
   $main.trigger('unselect');

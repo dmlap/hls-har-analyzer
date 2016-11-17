@@ -80,14 +80,28 @@
             <h3 class="panel-title">Details</h3>
           </div>
           <div class="panel-body">
-            <label>Original URL:</label>
-            <span class="original-url">
-              <a href="http://example.com/segment0.ts">
-                http://example.com/segment0.ts
-              </a>
-            </span>
-            <a href="#" class="download">Download</a>
-            <a href="#" class="download-decrypted">Download Decrypted</a>
+            <ul class="downloads">
+              <li class="download">
+                <a href="#" target="_blank">
+                  <span class="glyphicon glyphicon-download-alt"></span>
+                  Download
+                </a>
+              </li>
+              <li class="download-decrypted">
+                <a href="#" target="_blank">
+                  <span class="glyphicon glyphicon-lock"></span>
+                  Download Decrypted
+                </a>
+              </li>
+            </ul>
+            <dl>
+              <dt>Original URL:</dt>
+              <dd class="original-url">
+                <a href="http://example.com/segment0.ts">
+                  http://example.com/segment0.ts
+                </a>
+              </dd>
+            </dl>
           </div>
         </div>
       </section>
