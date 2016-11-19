@@ -90,3 +90,36 @@ form {
   color: #777;
   pointer-events: none;
 }
+
+.response-details .ready {
+  display: none;
+}
+.response-details.ready .loading {
+  display: none;
+}
+.response-details.ready .ready {
+  display: block;
+}
+
+/* ---- M3U8 Detail Entry ---- */
+.m3u8 .segments, .m3u8 .playlists {
+  list-style: none;
+  padding-left: 10px;
+}
+.m3u8 .unavailable {
+  color: #777;
+  font-style: italic;
+}
+.m3u8 .encrypted::before {
+  content: '\e033'; /* lock */
+  padding-right: 3px;
+  position: relative;
+  top: 1px;
+  display: inline-block;
+  font-family: 'Glyphicons Halflings';
+  font-style: normal;
+  font-weight: normal;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

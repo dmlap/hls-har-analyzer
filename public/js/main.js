@@ -71,17 +71,93 @@ function domifyM3u8(m3u8) {
   var result = document.createElement('div');
   result.className = 'm3u8';
 
-  var segments = document.createElement('ol');
+  if (m3u8.segments) {
+    result.appendChild(domifyM3u8Segments(m3u8));
+  }
+  if (m3u8.playlists) {
+    result.appendChild(domifyM3u8Playlists(m3u8));
+  }
+
+  return result;
+}
+
+function domifyM3u8Segments(m3u8) {
+  var result = document.createDocumentFragment();
+  var heading = document.createElement('h4');
+  var timeline = m3u8.discontinuitySequence || 0;
+  var segments;
+
+  heading.appendChild(document.createTextNode('Segments:'));
+  result.appendChild(heading);
+
+  segments = document.createElement('ol');
   segments.className = 'segments';
-  (m3u8.segments || []).forEach(function(segment, i) {
+  m3u8.segments.forEach(function(segment, i) {
     var li = document.createElement('li');
     var label = entryLabels[resolveUrl(m3u8.uri, segment.uri)];
-    var text = label ? label.text : 'ignored segment';
 
-    li.appendChild(document.createTextNode(text));
+    if (label) {
+      li.appendChild(document.createTextNode(label.text));
+    } else {
+      li.appendChild(document.createTextNode('unavailable segment'));
+      li.classList.add('unavailable');
+    }
+    if (segment.timeline !== timeline) {
+      li.classList.add('discontinuity');
+      timeline = segment.timeline;
+    }
+    if (segment.key) {
+      li.classList.add('encrypted');
+    }
+    if (segment.duration) {
+      li.appendChild(document.createTextNode(', ' + segment.duration + ' seconds'));
+    }
+
     segments.appendChild(li);
   });
   result.appendChild(segments);
+
+  return result;
+}
+
+function domifyM3u8Playlists(m3u8) {
+  var result = document.createDocumentFragment();
+  var heading = document.createElement('h4');
+  var playlists;
+  var text;
+
+  heading.appendChild(document.createTextNode('Playlists:'));
+  result.appendChild(heading);
+
+  playlists = document.createElement('ol');
+  playlists.className = 'playlists';
+  m3u8.playlists.forEach(function(playlist) {
+    var li = document.createElement('li');
+    var label = entryLabels[resolveUrl(m3u8.uri, playlist.uri)];
+
+    if (label) {
+      li.appendChild(document.createTextNode(label.text));
+    } else {
+      li.appendChild(document.createTextNode('unavailable playlist'));
+      li.classList.add('unavailable');
+    }
+
+    if (playlist.attributes) {
+      text = [];
+      if (playlist.attributes.BANDWIDTH) {
+        text.push((playlist.attributes.BANDWIDTH / 1024).toFixed(0) + ' kbps');
+      }
+      if (playlist.attributes.RESOLUTION) {
+        text.push(playlist.attributes.RESOLUTION.width
+                  + 'x'
+                  + playlist.attributes.RESOLUTION.width);
+      }
+    }
+    li.appendChild(document.createTextNode(' (' + text.join(', ') + ')'));
+
+    playlists.appendChild(li);
+  });
+  result.appendChild(playlists);
 
   return result;
 }
@@ -258,13 +334,11 @@ var entryRequest;
 
 function renderM3u8(url) {
   entryRequest = $.get(url, function(m3u8) {
-    console.log(m3u8);
     var parser = new m3u8Parser.Parser();
     parser.push(m3u8);
-    console.log(parser.manifest);
-    $entryPane.find('.response-details').empty().html(domifyM3u8(parser.manifest));
+    $entryPane.find('.response-details .ready').html(domifyM3u8(parser.manifest));
+    $entryPane.find('.response-details').addClass('ready');
   });
-  console.log('trying to render an m3u8');
 }
 
 function renderEntry() {
@@ -274,6 +348,8 @@ function renderEntry() {
   var replayUrl = '/replay/' + index
       + '/' + $selectedEntry.attr('data-basename');
   var splitUrl;
+
+  $entryPane.find('.response-details').removeClass('ready');
 
   $entryPane.find('.download a')
     .attr('href', replayUrl);
