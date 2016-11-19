@@ -44,26 +44,29 @@ form {
 }
 .analysis {
   display: flex;
-}
-.analysis > .panel {
-  margin-top: 0;
-  margin-right: 0;
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
 }
 
 /* ---- Entry List ---- */
-.analysis .entries-index {
+.analysis .har-entries {
   flex: auto;
+  overflow: auto;
   width: auto;
   white-space: nowrap;
 }
-.entries-index .list-group-item {
+.har-entries .list-group-item {
   cursor: pointer;
 }
 
 /* ---- Overview and Entry Panes ----*/
 .overview-pane, .entry-pane {
   flex: auto;
-  margin: 10px;
+  overflow: auto;
+  margin-left: 10px;
 }
 
 .viewing-entry .overview-pane {
