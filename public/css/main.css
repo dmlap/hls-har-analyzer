@@ -16,6 +16,14 @@ form {
   padding: 12px;
 }
 
+.main {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  top: 51px;
+}
+
 /*********
  * Input *
  *********/
@@ -37,24 +45,24 @@ form {
 .analysis {
   display: flex;
 }
+.analysis > .panel {
+  margin-top: 0;
+  margin-right: 0;
+}
 
 /* ---- Entry List ---- */
 .analysis .entries-index {
-  flex: 1;
+  flex: auto;
   width: auto;
+  white-space: nowrap;
 }
-.analysis td:first-child {
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.analysis td:nth-child(3) {
-  text-align: right;
+.entries-index .list-group-item {
+  cursor: pointer;
 }
 
 /* ---- Overview and Entry Panes ----*/
 .overview-pane, .entry-pane {
-  flex: 1;
+  flex: auto;
   margin: 10px;
 }
 

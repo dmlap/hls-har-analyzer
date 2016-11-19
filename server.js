@@ -31,7 +31,9 @@ app.use(function(req, res, next) {
 
 app.use(express.static(__dirname + '/public'));
 app.use('/bootstrap', express.static(__dirname + '/node_modules/bootstrap'));
-app.use('/aes-decrypter', express.static(__dirname + '/node_modules/aes-decrypter'))
+app.use('/aes-decrypter', express.static(__dirname + '/node_modules/aes-decrypter'));
+app.use('/thumbcoil', express.static(__dirname + '/node_modules/thumbcoil'));
+app.use('/m3u8-parser', express.static(__dirname + '/node_modules/m3u8-parser'));
 
 app.post('/har', upload.single('har-file'), function(request, response, next) {
   var error;

@@ -4,9 +4,87 @@
  * General *
  ***********/
 
+// the request-response entries parsed from the input HAR file
 var entries;
+// a map from entry URLs to more human-friendly labels
+var entryLabels;
+// the basename of the input HAR
 var inputName;
+// the jQuery-wrapped primary container
 var $main = $('.main');
+
+function indexUrls(entries) {
+  var nextSegmentId = 0;
+  var nextM3u8Id = 0;
+  var nextKeyId = 0;
+  var labels = {};
+
+  entries.forEach(function(entry, i) {
+    if (!labels[entry.request.url]) {
+      if (/video/.test(entry.response.contentType)) {
+        labels[entry.request.url] = {
+          attr: ['data-segment', nextSegmentId],
+          text: 'segment ' + nextSegmentId,
+          basename: 'segment-' + nextSegmentId + '.ts'
+        };
+        nextSegmentId++;
+      } else if (/octet-stream/.test(entry.response.contentType)) {
+        labels[entry.request.url] = {
+          attr: ['data-key', nextKeyId],
+          text: 'key ' + nextKeyId,
+          basename: 'key-' + nextKeyId
+        };
+        nextKeyId++;
+      } else {
+        labels[entry.request.url] = {
+          attr: ['data-m3u8', nextM3u8Id],
+          text: entry.response.playlistType + ' m3u8 ' + nextM3u8Id,
+          basename: 'index-' + nextM3u8Id + '.m3u8'
+        };
+        nextM3u8Id++;
+      }
+    }
+  });
+
+  return labels;
+};
+
+function resolveUrl(base, path) {
+  if ((/^[A-z0-9]+:\/\//).test(path)) {
+    // absolute URL
+    return path;
+  }
+  if (path.indexOf('//') === 0) {
+    // protocol-relative URL
+    return base.split('/')[0] + path;
+  }
+  if (path.indexOf('/') === 0) {
+    // domain-relative URL
+    return base.split('/').slice(0, 3).join('/') + '/' + path;
+  }
+
+  // relative URL
+  return base.split('/').slice(0, -1).concat(path).join('/')
+}
+
+function domifyM3u8(m3u8) {
+  var result = document.createElement('div');
+  result.className = 'm3u8';
+
+  var segments = document.createElement('ol');
+  segments.className = 'segments';
+  (m3u8.segments || []).forEach(function(segment, i) {
+    var li = document.createElement('li');
+    var label = entryLabels[resolveUrl(m3u8.uri, segment.uri)];
+    var text = label ? label.text : 'ignored segment';
+
+    li.appendChild(document.createTextNode(text));
+    segments.appendChild(li);
+  });
+  result.appendChild(segments);
+
+  return result;
+}
 
 /**************
  * Navigation *
@@ -65,105 +143,62 @@ $fileInput.on('change', function() {
 
 // ---- Entry Index ---- //
 
-function indexUrls(entries) {
-  var nextSegmentId = 0;
-  var nextM3u8Id = 0;
-  var nextKeyId = 0;
-  var labels = {};
+function buildEntryList(entries) {
+  var list = document.createElement('ol');
+
+  entryLabels = indexUrls(entries);
+
+  list.className = 'list-group har-entries';
 
   entries.forEach(function(entry, i) {
-    if (!labels[entry.request.url]) {
-      if (/video/.test(entry.response.contentType)) {
-        labels[entry.request.url] = {
-          attr: ['data-segment', nextSegmentId],
-          text: 'segment ' + nextSegmentId,
-          basename: 'segment-' + nextSegmentId + '.ts'
-        };
-        nextSegmentId++;
-      } else if (/octet-stream/.test(entry.response.contentType)) {
-        labels[entry.request.url] = {
-          attr: ['data-key', nextKeyId],
-          text: 'key ' + nextKeyId,
-          basename: 'key-' + nextKeyId
-        };
-        nextKeyId++;
-      } else {
-        labels[entry.request.url] = {
-          attr: ['data-m3u8', nextM3u8Id],
-          text: entry.response.playlistType + ' m3u8 ' + nextM3u8Id,
-          basename: 'index-' + nextM3u8Id + '.m3u8'
-        };
-        nextM3u8Id++;
-      }
+    var li = document.createElement('li');
+    li.setAttribute.apply(li, entryLabels[entry.request.url].attr);
+    li.setAttribute('data-index', i);
+    li.setAttribute('data-basename', entryLabels[entry.request.url].basename);
+
+    li.appendChild(document.createTextNode(entryLabels[entry.request.url].text));
+    li.setAttribute('title', entry.request.url);
+
+    li.className = 'list-group-item';
+    if (entry.response.status >= 500) {
+      li.className += ' list-group-item-danger';
+    } else if (entry.response.status >= 400) {
+      li.className += ' list-group-item-warning';
+    } else if (entry.response.status >= 300) {
+      li.className += ' list-group-item-info';
     }
+
+    $(li).data('entry', entry);
+
+    list.appendChild(li);
   });
 
-  return labels;
-};
-
-function buildTable(entries) {
-  var table = document.createElement('table');
-  var tableHead = document.createElement('thead');
-  var tableBody = document.createElement('tbody');
-
-  var labels = indexUrls(entries);
-  var lastKey;
-
-  table.className = 'table table-hover table-condensed har-entries';
-  tableHead.innerHTML = '<tr><th>' + [
-    'Name',
-    'Status',
-    'Size'
-  ].join('</th><th>') + '</th></tr>';
-  table.appendChild(tableHead);
-  table.appendChild(tableBody);
-
-  entries.forEach(function(entry, i) {
-    var row = document.createElement('tr');
-    row.setAttribute.apply(row, labels[entry.request.url].attr);
-    row.setAttribute('data-index', i);
-    row.setAttribute('data-basename', labels[entry.request.url].basename);
-
-    row.innerHTML = '<td>' + [
-      '<a href="/replay/' + i + '/' + labels[entry.request.url].basename
-        + '" title="' + entry.request.url + '" target="_blank">'
-        + labels[entry.request.url].text + '</a>',
-      entry.response.status,
-      entry.response.bodySize
-    ].join('</td><td>') + '</td>';
-
-    $(row).data('entry', entry);
-
-    tableBody.appendChild(row);
-  });
-
-  return table;
+  return list;
 }
 
 function renderHar() {
   var fragment = document.createDocumentFragment();
-  var table = buildTable(entries);
-  var $table = $(table);
-  var $selectedRow;
-  fragment.appendChild(table);
+  var entryList = buildEntryList(entries);
+  var $entryList = $(entryList);
+  var $selectedEntry;
+  fragment.appendChild(entryList);
 
   $('.analysis .har-entries').replaceWith(fragment);
-  $table.on('click', function(event) {
+  $entryList.on('click', function(event) {
     var $target = $(event.target);
     var $row;
 
-    if (!$target.is('a')) {
+    if (!$target.is('.list-group-item')) {
       return;
     }
 
-    event.preventDefault();
-    $row = $target.parents('tr');
+    $row = $target;
 
-    if ($selectedRow) {
-      $selectedRow.removeClass('info');
+    if ($selectedEntry) {
+      $selectedEntry.removeClass('active');
     }
-    $row.addClass('info');
-    $selectedRow = $row;
+    $row.addClass('active');
+    $selectedEntry = $row;
 
     $main.addClass('viewing-entry');
     $main.trigger('selectionchange');
@@ -175,7 +210,7 @@ function renderHar() {
 $main.on('entrieschange', renderHar);
 
 $main.on('unselect', function() {
-  $main.find('.har-entries .info').removeClass('info');
+  $main.find('.har-entries .active').removeClass('active');
   $main.removeClass('viewing-entry');
 });
 
@@ -189,9 +224,9 @@ function applyFilter() {
   var start = parseInt($startSegment.val(), 10);
   var end = parseInt($endSegment.val(), 10);
 
-  var $table = $('.har-entries');
-  var $start = $table.find('[data-segment=' + start + ']');
-  var $end = $table.find('[data-segment=' + end + ']');
+  var $entryList = $('.har-entries');
+  var $start = $entryList.find('[data-segment=' + start + ']');
+  var $end = $entryList.find('[data-segment=' + end + ']');
 
   if (start === 0) {
     $start.prevAll().andSelf().removeClass('hidden');
@@ -219,27 +254,60 @@ $startSegment.add($endSegment).on('change', applyFilter);
 
 // Entry Pane
 var $entryPane = $('.entry-pane');
+var entryRequest;
 
-$main.on('selectionchange', function() {
-  var $selectedRow = $('.har-entries .info');
-  var entry = $selectedRow.data('entry');
-  var index = $selectedRow.attr('data-index');
+function renderM3u8(url) {
+  entryRequest = $.get(url, function(m3u8) {
+    console.log(m3u8);
+    var parser = new m3u8Parser.Parser();
+    parser.push(m3u8);
+    console.log(parser.manifest);
+    $entryPane.find('.response-details').empty().html(domifyM3u8(parser.manifest));
+  });
+  console.log('trying to render an m3u8');
+}
 
-  $entryPane.find('.original-url')
-    .html('<a href="' + entry.request.url + '">' + entry.request.url +'</a>');
+function renderEntry() {
+  var $selectedEntry = $('.har-entries .active');
+  var entry = $selectedEntry.data('entry');
+  var index = $selectedEntry.attr('data-index');
+  var replayUrl = '/replay/' + index
+      + '/' + $selectedEntry.attr('data-basename');
+  var splitUrl;
+
   $entryPane.find('.download a')
-    .attr('href', '/replay/' + index
-          + '/' + $selectedRow.attr('data-basename'));
-
+    .attr('href', replayUrl);
   if (entry.response.encrypted) {
+    replayUrl = '/decrypt/' + index
+      + '/' + $selectedEntry.attr('data-basename');
     $entryPane.find('.download-decrypted')
       .removeClass('disabled')
-      .find('a').attr('href', '/decrypt/' + index
-                      + '/' + $selectedRow.attr('data-basename'));
+      .find('a').attr('href', replayUrl);
   } else {
     $entryPane.find('.download-decrypted').addClass('disabled');
   }
-});
+
+  splitUrl = entry.request.url.split('/');
+  $entryPane.find('.original-url')
+    .html('<a href="' + entry.request.url + '">'
+          + (splitUrl.slice(0, 3)
+             .concat('&hellip;')
+             .concat(splitUrl.slice(-1))
+             .join('/'))
+          + '</a>');
+  $entryPane.find('.http-status')
+    .html(entry.response.status);
+  $entryPane.find('.body-size')
+    .html(entry.response.bodySize + 'B');
+
+  if (entry.response.contentType.indexOf('mpeg') > 0) {
+    renderM3u8(replayUrl);
+  } else if (entry.response.contentType.indexOf('video') === 0) {
+    console.log('trying to render a segment');
+  }
+}
+
+$main.on('selectionchange', renderEntry);
 
 $entryPane.find('.close').on('click', function() {
   $main.trigger('unselect');
