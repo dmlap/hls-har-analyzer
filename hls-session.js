@@ -43,7 +43,9 @@ module.exports = function collectHlsSession(har) {
     // m3u8s
     if (M3U8_MIME_TYPE.test(entry.response.contentType)) {
 
-      if (entry.response.content.text) {
+      if (!entry.response.content.text) {
+        entry.playlistType = 'unavailable';
+      } else {
         m3u8Parser = new m3u8.Parser();
         m3u8Parser.push(new Buffer(entry.response.content.text, 'base64').toString());
 
